@@ -24,19 +24,21 @@ const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin']
 // Chaque thème règle le mode MUI, la palette des charts et quelques options de forme
 const themes = [
   {
+    // thème de base : rendu MUI par défaut, sans réglage particulier
     name: 'Theme 1',
+    plain: true,
     mode: 'light',
-    primary: '#2a78d6',
-    background: '#f4f4f1',
-    colors: ['#2a78d6', '#85b7eb', '#cfe1f7'],
-    outlined: true,
-    radius: 8,
-    barRadius: 4,
-    innerRadius: 60,
+    primary: '#1976d2',
+    background: '#ffffff',
+    colors: undefined,
+    outlined: false,
+    radius: 4,
+    barRadius: 0,
+    innerRadius: 40,
     paddingAngle: 0,
     cornerRadius: 0,
     area: false,
-    curve: 'linear',
+    curve: undefined,
   },
   {
     name: 'Theme 2',
@@ -100,16 +102,21 @@ const themes = [
   },
 ]
 
+// une prop colors explicitement undefined écraserait la palette par défaut de MUI
+const colorsOf = (t) => (t.colors ? { colors: t.colors } : {})
+const gridOf =(t) => (t.plain ? undefined : { horizontal: true })
+const cleanAxis = (t) => (t.plain ? {} : { disableLine: true, disableTicks: true })
+
 const chartTypes = {
   bar: {
     title: 'Ventes (bar)',
     render: (t) => (
       <BarChart
-        colors={t.colors}
+        {...colorsOf(t)}
         borderRadius={t.barRadius}
-        grid={{ horizontal: true }}
-        xAxis={[{ scaleType: 'band', data: months, disableLine: true, disableTicks: true }]}
-        yAxis={[{ disableLine: true, disableTicks: true }]}
+        grid={gridOf(t)}
+        xAxis={[{ scaleType: 'band', data: months, ...cleanAxis(t) }]}
+        yAxis={[cleanAxis(t)]}
         series={[{ data: [4, 7, 3, 9, 6, 8] }]}
       />
     ),
@@ -118,7 +125,7 @@ const chartTypes = {
     title: 'Répartition (donut)',
     render: (t) => (
       <PieChart
-        colors={t.colors}
+        {...colorsOf(t)}
         series={[
           {
             innerRadius: t.innerRadius,
@@ -138,11 +145,13 @@ const chartTypes = {
     title: 'Évolution (line)',
     render: (t) => (
       <LineChart
-        colors={t.colors}
-        grid={{ horizontal: true }}
-        xAxis={[{ scaleType: 'point', data: months, disableLine: true, disableTicks: true }]}
-        yAxis={[{ disableLine: true, disableTicks: true }]}
-        series={[{ data: [2, 5, 3, 8, 6, 10], area: t.area, curve: t.curve, showMark: false }]}
+        {...colorsOf(t)}
+        grid={gridOf(t)}
+        xAxis={[{ scaleType: 'point', data: months, ...cleanAxis(t) }]}
+        yAxis={[cleanAxis(t)]}
+        series={[
+          { data: [2, 5, 3, 8, 6, 10], area: t.area, curve: t.curve, ...(t.plain ? {} : { showMark: false }) },
+        ]}
       />
     ),
   },
@@ -150,8 +159,8 @@ const chartTypes = {
     title: 'Nuage (scatter)',
     render: (t) => (
       <ScatterChart
-        colors={t.colors}
-        grid={{ horizontal: true }}
+        {...colorsOf(t)}
+        grid={gridOf(t)}
         series={[
           {
             data: [
@@ -174,7 +183,7 @@ const chartTypes = {
         valueMin={0}
         valueMax={100}
         cornerRadius={t.cornerRadius ? '50%' : 0}
-        sx={{ [`& .${gaugeClasses.valueArc}`]: { fill: t.colors[0] } }}
+        sx={t.colors && { [`& .${gaugeClasses.valueArc}`]: { fill: t.colors[0] } }}
       />
     ),
   },
