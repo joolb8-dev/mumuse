@@ -9,6 +9,9 @@ import { LineChart } from '@mui/x-charts/LineChart'
 import { PieChart } from '@mui/x-charts/PieChart'
 import { ScatterChart } from '@mui/x-charts/ScatterChart'
 import { Gauge, gaugeClasses } from '@mui/x-charts/Gauge'
+import type { ReactNode } from 'react'
+import type { ChartType } from '../types/block'
+import type { AppTheme } from '../types/theme'
 
 const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin']
 
@@ -16,17 +19,22 @@ const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin']
 
 // Une prop `colors` explicitement undefined écraserait la palette par défaut
 // de MUI : on ne la passe que si le thème en définit une.
-const colorsOf = (theme) => (theme.colors ? { colors: theme.colors } : {})
+const colorsOf = (theme: AppTheme) => (theme.colors ? { colors: theme.colors } : {})
 
 // Grille horizontale légère (thèmes personnalisés uniquement).
-const gridOf = (theme) => (theme.plain ? undefined : { horizontal: true })
+const gridOf = (theme: AppTheme) => (theme.plain ? undefined : { horizontal: true })
 
 // Axes épurés : sans trait d'axe ni petits traits (thèmes personnalisés uniquement).
-const cleanAxis = (theme) => (theme.plain ? {} : { disableLine: true, disableTicks: true })
+const cleanAxis = (theme: AppTheme) => (theme.plain ? {} : { disableLine: true, disableTicks: true })
 
 // --- Types de charts -------------------------------------------------------
 
-export const chartTypes = {
+interface ChartDefinition {
+  title: string
+  render: (theme: AppTheme) => ReactNode
+}
+
+export const chartTypes: Record<ChartType, ChartDefinition> = {
   bar: {
     title: 'Ventes (bar)',
     render: (theme) => (

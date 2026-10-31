@@ -58,3 +58,18 @@
   flex: 1;
   min-height: 0;
 }
+
+/* --- Écrans sans grille (chargement, erreur, vide) ---------------------- */
+
+.state-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 64px 16px;
+}
+
+/* bandeau d'erreur d'enregistrement, sous la barre du haut */
+.save-error {
+  margin: 16px 16px 0;
+}

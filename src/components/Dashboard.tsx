@@ -1,28 +1,43 @@
 // Grille de blocs déplaçables et redimensionnables (react-grid-layout).
 //
 // Réglage clé : 1 colonne = 1 pixel et rowHeight = 1 pixel, sans marge. Les
-// tailles de la grille sont alors directement des pixels (voir lib/gridLayout.js).
+// tailles de la grille sont alors directement des pixels (voir lib/gridLayout.ts).
 
 import { useMemo } from 'react'
-import ReactGridLayout, { useContainerWidth, verticalCompactor } from 'react-grid-layout'
+import ReactGridLayout, {
+  useContainerWidth,
+  verticalCompactor,
+  type LayoutItem,
+  type ResizeHandleAxis,
+} from 'react-grid-layout'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
-import { blocksToLayout, layoutToBlocks, MIN_SIZE } from '../lib/gridLayout'
+import { blocksToLayout, layoutToBlocks, MIN_BLOCK_SIZE_PX } from '../lib/gridLayout'
+import type { Block } from '../types/block'
+import type { AppTheme } from '../types/theme'
 import BlockCard from './BlockCard'
 
 // Poignées de redimensionnement : bord droit, bord du bas et coin.
-const RESIZE_HANDLES = ['e', 's', 'se']
+const RESIZE_HANDLES: ResizeHandleAxis[] = ['e', 's', 'se']
 
-export default function Dashboard({ blocks, theme, editing, onBlocksChange }) {
+interface DashboardProps {
+  blocks: Block[]
+  theme: AppTheme
+  editing: boolean
+  onBlocksChange: (blocks: Block[]) => void
+}
+
+export default function Dashboard({ blocks, theme, editing, onBlocksChange }: DashboardProps) {
   // largeur disponible, mesurée sur le conteneur (se met à jour au redimensionnement de la fenêtre)
   const { width, containerRef, mounted } = useContainerWidth()
-  const containerWidth = Math.max(MIN_SIZE, Math.floor(width))
+  const containerWidth = Math.max(MIN_BLOCK_SIZE_PX, Math.floor(width))
 
   const layout = useMemo(() => blocksToLayout(blocks, containerWidth), [blocks, containerWidth])
 
   // Après un déplacement ou un redimensionnement, on retrouve l'ordre de lecture
   // et on re-tasse tout de suite : ce qu'on voit est ce qui sera enregistré.
-  const handleSettle = (nextLayout) => onBlocksChange(layoutToBlocks(nextLayout, blocks))
+  const handleSettle = (nextLayout: readonly LayoutItem[]) =>
+    onBlocksChange(layoutToBlocks(nextLayout, blocks))
 
   return (
     <div className="dashboard">
@@ -44,13 +59,8 @@ export default function Dashboard({ blocks, theme, editing, onBlocksChange }) {
             resizeConfig={{ enabled: editing, handles: RESIZE_HANDLES }}
             compactor={verticalCompactor}
           >
-            {layout.map(({ i }) => (
-              <BlockCard
-                key={i}
-                block={blocks.find((block) => block.id === i)}
-                theme={theme}
-                editing={editing}
-              />
+            {blocks.map((block) => (
+              <BlockCard key={block.id} block={block} theme={theme} editing={editing} />
             ))}
           </ReactGridLayout>
         )}

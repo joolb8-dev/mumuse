@@ -7,7 +7,9 @@
 // Le thème 1 est le rendu MUI par défaut : `plain: true` désactive les réglages
 // de style des charts, et `colors: undefined` garde leur palette d'origine.
 
-export const themes = [
+import type { AppTheme } from '../types/theme'
+
+export const themes: AppTheme[] = [
   {
     name: 'Theme 1',
     plain: true,

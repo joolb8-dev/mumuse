@@ -6,11 +6,19 @@
 //
 // Le ref est transmis explicitement car la grille en a besoin pour mesurer le bloc.
 
-import { forwardRef } from 'react'
+import { forwardRef, type HTMLAttributes } from 'react'
 import { Paper, Typography } from '@mui/material'
 import { chartTypes } from '../data/chartTypes'
+import type { Block } from '../types/block'
+import type { AppTheme } from '../types/theme'
 
-const BlockCard = forwardRef(function BlockCard(
+interface BlockCardProps extends HTMLAttributes<HTMLDivElement> {
+  block: Block
+  theme: AppTheme
+  editing: boolean
+}
+
+const BlockCard = forwardRef<HTMLDivElement, BlockCardProps>(function BlockCard(
   { block, theme, editing, className = '', children, ...gridProps },
   ref,
 ) {
