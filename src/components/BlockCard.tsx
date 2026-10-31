@@ -7,7 +7,9 @@
 // Le ref est transmis explicitement car la grille en a besoin pour mesurer le bloc.
 
 import { forwardRef, type HTMLAttributes } from 'react'
-import { Paper, Typography } from '@mui/material'
+import LockIcon from '@mui/icons-material/Lock'
+import LockOpenIcon from '@mui/icons-material/LockOpen'
+import { IconButton, Paper, Typography } from '@mui/material'
 import { chartTypes } from '../data/chartTypes'
 import type { Block } from '../types/block'
 import type { AppTheme } from '../types/theme'
@@ -16,21 +18,33 @@ interface BlockCardProps extends HTMLAttributes<HTMLDivElement> {
   block: Block
   theme: AppTheme
   editing: boolean
+  onToggleLock: (blockId: string) => void
 }
 
 const BlockCard = forwardRef<HTMLDivElement, BlockCardProps>(function BlockCard(
-  { block, theme, editing, className = '', children, ...gridProps },
+  { block, theme, editing, onToggleLock, className = '', children, ...gridProps },
   ref,
 ) {
   const chart = chartTypes[block.type]
 
   return (
-    <div ref={ref} className={`block ${className}`} {...gridProps}>
+    <div ref={ref} className={`block ${block.locked ? 'is-locked' : ''} ${className}`} {...gridProps}>
       <Paper
         variant={theme.outlined ? 'outlined' : 'elevation'}
         elevation={theme.outlined ? 0 : 2}
         className={editing ? 'block-card is-editing' : 'block-card'}
       >
+        {/* le bouton n'apparaît qu'en mode édition ; la grille l'ignore pour le glissement (voir `cancel` dans Dashboard) */}
+        {editing && (
+          <IconButton
+            size="small"
+            className="block-card__lock"
+            aria-label={block.locked ? 'Déverrouiller le bloc' : 'Verrouiller le bloc'}
+            onClick={() => onToggleLock(block.id)}
+          >
+            {block.locked ? <LockIcon fontSize="inherit" /> : <LockOpenIcon fontSize="inherit" />}
+          </IconButton>
+        )}
         <Typography variant="subtitle2" className="block-card__title">
           {chart.title}
         </Typography>

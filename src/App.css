@@ -37,9 +37,15 @@
   box-sizing: border-box;
 }
 
+/* un bloc verrouillé n'a pas de poignées de redimensionnement */
+.block.is-locked .react-resizable-handle {
+  display: none;
+}
+
 /* --- Carte d'un bloc ---------------------------------------------------- */
 
 .block-card {
+  position: relative; /* sert de repère au bouton de verrouillage */
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -50,6 +56,14 @@
 /* en mode édition, toute la carte est attrapable pour la déplacer */
 .block-card.is-editing {
   cursor: move;
+}
+
+/* sélecteur à deux classes : sinon le style par défaut du bouton MUI reprend le dessus */
+.block-card .block-card__lock {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 1;
 }
 
 .block-card__title {

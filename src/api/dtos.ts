@@ -10,4 +10,5 @@ export interface BlockDto {
   w: number
   h: number
   position: number
+  locked?: boolean // absent des données enregistrées avant l'ajout du verrouillage
 }

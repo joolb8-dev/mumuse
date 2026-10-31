@@ -23,6 +23,9 @@ import BlockCard from './BlockCard'
 // taille du bloc, mais il reste à sa place dans le flux.
 const RESIZE_HANDLES: ResizeHandleAxis[] = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw']
 
+// Le bouton de verrouillage ne doit pas démarrer un déplacement quand on clique dessus.
+const LOCK_BUTTON_SELECTOR = '.block-card__lock'
+
 interface DashboardProps {
   blocks: Block[]
   theme: AppTheme
@@ -36,6 +39,12 @@ export default function Dashboard({ blocks, theme, editing, onBlocksChange }: Da
   const containerWidth = Math.max(MIN_BLOCK_SIZE_PX, Math.floor(width))
 
   const layout = useMemo(() => blocksToLayout(blocks, containerWidth), [blocks, containerWidth])
+
+  // Verrouille ou déverrouille un bloc (la copie en cours de modification change, rien n'est enregistré).
+  const handleToggleLock = (blockId: string) =>
+    onBlocksChange(
+      blocks.map((block) => (block.id === blockId ? { ...block, locked: !block.locked } : block)),
+    )
 
   // Après un déplacement ou un redimensionnement, on retrouve l'ordre de lecture
   // et on re-tasse tout de suite : ce qu'on voit est ce qui sera enregistré.
@@ -58,12 +67,18 @@ export default function Dashboard({ blocks, theme, editing, onBlocksChange }: Da
               margin: [0, 0],
               containerPadding: [0, 0],
             }}
-            dragConfig={{ enabled: editing }}
+            dragConfig={{ enabled: editing, cancel: LOCK_BUTTON_SELECTOR }}
             resizeConfig={{ enabled: editing, handles: RESIZE_HANDLES }}
             compactor={verticalCompactor}
           >
             {blocks.map((block) => (
-              <BlockCard key={block.id} block={block} theme={theme} editing={editing} />
+              <BlockCard
+                key={block.id}
+                block={block}
+                theme={theme}
+                editing={editing}
+                onToggleLock={handleToggleLock}
+              />
             ))}
           </ReactGridLayout>
         )}

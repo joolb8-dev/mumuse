@@ -41,6 +41,9 @@ export function blocksToLayout(blocks: Block[], containerWidth: number): LayoutI
         h: block.height,
         minW: MIN_BLOCK_SIZE_PX,
         minH: MIN_BLOCK_SIZE_PX,
+        // un bloc verrouillé ne peut ni être attrapé ni redimensionné
+        isDraggable: !block.locked,
+        isResizable: !block.locked,
       }
       x += w
       rowHeight = Math.max(rowHeight, block.height)

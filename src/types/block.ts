@@ -13,4 +13,5 @@ export interface Block {
   width: number // pixels
   height: number // pixels
   order: number // rang de lecture : de gauche à droite, puis ligne par ligne
+  locked: boolean // verrouillé : ne peut être ni déplacé ni redimensionné
 }
