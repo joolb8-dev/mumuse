@@ -112,7 +112,7 @@ export default function App() {
             layout={layout}
             onLayoutChange={setLayout}
             gridConfig={{ cols: 12, rowHeight: 30 }}
-            dragConfig={{ enabled: editing, handle: '.drag-handle' }}
+            dragConfig={{ enabled: editing }}
             resizeConfig={{ enabled: editing }}
             compactor={verticalCompactor}
           >
@@ -120,12 +120,11 @@ export default function App() {
               <Paper
                 key={i}
                 elevation={2}
-                sx={{ display: 'flex', flexDirection: 'column', p: 1, overflow: 'hidden' }}
+                sx={{ display: 'flex', flexDirection: 'column', p: 1, overflow: 'hidden', cursor: editing ? 'move' : 'default' }}
               >
                 <Typography
                   variant="subtitle2"
-                  className="drag-handle"
-                  sx={{ cursor: editing ? 'move' : 'default', userSelect: 'none' }}
+                  sx={{ userSelect: 'none' }}
                 >
                   {widgets[i].title}
                 </Typography>
