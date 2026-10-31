@@ -11,6 +11,7 @@
 import { useState } from 'react'
 import { areBlocksEqual } from '../lib/blocks'
 import type { Block } from '../types/block'
+import type { LayoutMode } from '../types/layoutMode'
 
 export interface UseBlocksEditorResult {
   // blocs à afficher : la copie pendant l'édition, sinon la version enregistrée
@@ -29,6 +30,7 @@ export interface UseBlocksEditorResult {
 export function useBlocksEditor(
   blocks: Block[],
   save: (blocks: Block[]) => Promise<void>,
+  layoutMode: LayoutMode,
 ): UseBlocksEditorResult {
   const [draft, setDraft] = useState<Block[] | null>(null)
   const [saving, setSaving] = useState(false)
@@ -59,7 +61,7 @@ export function useBlocksEditor(
   return {
     displayedBlocks: draft ?? blocks,
     editing: draft !== null,
-    hasUnsavedChanges: draft !== null && !areBlocksEqual(draft, blocks),
+    hasUnsavedChanges: draft !== null && !areBlocksEqual(draft, blocks, layoutMode),
     saving,
     saveFailed,
     startEditing,

@@ -6,12 +6,6 @@
 export const CHART_TYPES = ['bar', 'donut', 'line', 'scatter', 'gauge'] as const
 export type ChartType = (typeof CHART_TYPES)[number]
 
-// Position figée d'un bloc verrouillé, en pixels depuis le coin haut-gauche de la grille.
-export interface BlockPin {
-  x: number
-  y: number
-}
-
 // Un bloc = un chart sur la grille.
 export interface Block {
   id: string // identifiant unique et stable (sert de clé)
@@ -19,7 +13,12 @@ export interface Block {
   width: number // pixels
   height: number // pixels
   order: number // rang de lecture : de gauche à droite, puis ligne par ligne
-  // Position figée si le bloc est verrouillé, sinon null. Un bloc verrouillé ne
-  // bouge pas, ne se redimensionne pas, et les autres blocs contournent sa place.
-  pin: BlockPin | null
+  // Position en pixels depuis le coin haut-gauche de la grille. Elle sert :
+  //  - en disposition libre : à tous les blocs
+  //  - en disposition automatique : seulement aux blocs verrouillés
+  x: number
+  y: number
+  // Verrouillé : le bloc ne bouge pas, ne se redimensionne pas, et les autres
+  // blocs ne peuvent pas prendre sa place.
+  locked: boolean
 }

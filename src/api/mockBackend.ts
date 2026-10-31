@@ -17,6 +17,7 @@ export const mockConfig = {
 
 const BLOCKS_STORAGE_KEY = 'mumuse-api-blocks'
 const THEME_STORAGE_KEY = 'mumuse-theme'
+const LAYOUT_MODE_STORAGE_KEY = 'mumuse-layout-mode'
 
 // Blocs renvoyés tant que rien n'a été enregistré.
 const initialBlockDtos: BlockDto[] = [
@@ -76,5 +77,16 @@ export const mockBackend = {
   async putThemeIndex(index: number): Promise<void> {
     await simulateNetwork(0)
     writeJson(THEME_STORAGE_KEY, index)
+  },
+
+  async getLayoutMode(): Promise<string | null> {
+    await simulateNetwork(0)
+    const saved = readJson(LAYOUT_MODE_STORAGE_KEY)
+    return typeof saved === 'string' ? saved : null
+  },
+
+  async putLayoutMode(mode: string): Promise<void> {
+    await simulateNetwork(0)
+    writeJson(LAYOUT_MODE_STORAGE_KEY, mode)
   },
 }

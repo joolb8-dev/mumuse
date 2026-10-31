@@ -149,3 +149,19 @@
   padding: 0 16px 16px;
   box-sizing: border-box;
 }
+
+/* --- Choix de la disposition (barre du haut) ---------------------------- */
+
+/* séparé des boutons de thème par un trait vertical */
+.top-bar__layout-modes {
+  display: flex;
+  gap: 8px;
+  margin-left: 8px;
+  padding-left: 16px;
+  border-left: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+/* disposition active : même mise en évidence que le thème actif */
+.layout-button.is-active {
+  background-color: rgba(255, 255, 255, 0.25);
+}

@@ -1,7 +1,7 @@
 // Conversion entre les formes du backend (DTO) et les types de l'interface.
 // C'est le seul endroit qui connaît les deux vocabulaires.
 
-import { CHART_TYPES, type Block, type BlockPin, type ChartType } from '../types/block'
+import { CHART_TYPES, type Block, type ChartType } from '../types/block'
 import type { BlockDto } from './dtos'
 
 function isChartType(value: string): value is ChartType {
@@ -14,12 +14,6 @@ function toChartType(value: string): ChartType {
   return value
 }
 
-// Un bloc n'est verrouillé que si le serveur donne aussi sa position figée.
-function toPin(dto: BlockDto): BlockPin | null {
-  if (!dto.locked || dto.pin_x === undefined || dto.pin_y === undefined) return null
-  return { x: dto.pin_x, y: dto.pin_y }
-}
-
 export function toBlock(dto: BlockDto): Block {
   return {
     id: dto.block_id,
@@ -27,7 +21,9 @@ export function toBlock(dto: BlockDto): Block {
     width: dto.w,
     height: dto.h,
     order: dto.position,
-    pin: toPin(dto),
+    x: dto.x ?? dto.pin_x ?? 0,
+    y: dto.y ?? dto.pin_y ?? 0,
+    locked: dto.locked ?? false,
   }
 }
 
@@ -38,8 +34,8 @@ export function toBlockDto(block: Block): BlockDto {
     w: block.width,
     h: block.height,
     position: block.order,
-    locked: block.pin !== null,
-    pin_x: block.pin?.x,
-    pin_y: block.pin?.y,
+    x: block.x,
+    y: block.y,
+    locked: block.locked,
   }
 }

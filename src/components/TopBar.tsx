@@ -1,12 +1,17 @@
-// Barre du haut : boutons de thème à gauche, actions d'édition à droite.
+// Barre du haut : thèmes et choix de disposition à gauche, actions d'édition à droite.
 
 import { AppBar, Button, Toolbar, Typography } from '@mui/material'
+import { LAYOUT_MODES, LAYOUT_MODE_LABELS, type LayoutMode } from '../types/layoutMode'
 import type { AppTheme } from '../types/theme'
 
 interface TopBarProps {
   themes: AppTheme[]
   themeIndex: number
   onSelectTheme: (index: number) => void
+  layoutMode: LayoutMode
+  // le changement de disposition est bloqué pendant l'édition ou un changement en cours
+  layoutSwitchDisabled: boolean
+  onSelectLayoutMode: (mode: LayoutMode) => void
   editing: boolean
   hasUnsavedChanges: boolean
   saving: boolean
@@ -19,6 +24,9 @@ export default function TopBar({
   themes,
   themeIndex,
   onSelectTheme,
+  layoutMode,
+  layoutSwitchDisabled,
+  onSelectLayoutMode,
   editing,
   hasUnsavedChanges,
   saving,
@@ -43,6 +51,23 @@ export default function TopBar({
               {theme.name}
             </Button>
           ))}
+
+          {/* choix de la disposition des blocs */}
+          <div className="top-bar__layout-modes">
+            {LAYOUT_MODES.map((mode) => (
+              <Button
+                key={mode}
+                color="inherit"
+                size="small"
+                variant="outlined"
+                disabled={layoutSwitchDisabled}
+                className={mode === layoutMode ? 'layout-button is-active' : 'layout-button'}
+                onClick={() => onSelectLayoutMode(mode)}
+              >
+                {LAYOUT_MODE_LABELS[mode]}
+              </Button>
+            ))}
+          </div>
         </div>
 
         {editing ? (

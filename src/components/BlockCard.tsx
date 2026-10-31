@@ -12,7 +12,6 @@ import LockOpenIcon from '@mui/icons-material/LockOpen'
 import OpenInFullIcon from '@mui/icons-material/OpenInFull'
 import { IconButton, Paper, Typography } from '@mui/material'
 import { chartTypes } from '../data/chartTypes'
-import { isLocked } from '../lib/blocks'
 import type { Block } from '../types/block'
 import type { AppTheme } from '../types/theme'
 
@@ -29,7 +28,7 @@ const BlockCard = forwardRef<HTMLDivElement, BlockCardProps>(function BlockCard(
   ref,
 ) {
   const chart = chartTypes[block.type]
-  const locked = isLocked(block)
+  const locked = block.locked
 
   return (
     <div ref={ref} className={`block ${locked ? 'is-locked' : ''} ${className}`} {...gridProps}>

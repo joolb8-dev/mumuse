@@ -1,17 +1,19 @@
-// Passage entre nos blocs ({ id, type, width, height, order, pin }) et le format
-// attendu par react-grid-layout ({ i, x, y, w, h }).
+// Passage entre nos blocs ({ id, type, width, height, order, x, y, locked }) et le
+// format attendu par react-grid-layout ({ i, x, y, w, h }).
 //
 // La grille est réglée pour qu'une unité vaille un pixel : w et h sont donc
 // directement la largeur et la hauteur du bloc en pixels.
 //
-// Deux sortes de blocs :
-//  - les blocs libres n'ont pas de position enregistrée : x et y sont recalculés
-//    à partir de `order`, ce qui garde la grille cohérente si une taille change ;
-//  - les blocs verrouillés (`pin`) gardent leur position figée, et les blocs
-//    libres coulent autour d'eux : aucun ne peut prendre leur place.
+// Deux dispositions (voir types/layoutMode.ts) :
+//  - automatique : les blocs libres n'ont pas de position utile, elle est recalculée
+//    à partir de `order` (flux de gauche à droite, retour à la ligne). Les blocs
+//    verrouillés gardent leur position (x, y) et les autres coulent autour.
+//  - libre : chaque bloc reste exactement à sa position (x, y). Rien ne bouge
+//    tout seul, sauf un bloc devenu gênant (voir freeLayout).
 
 import { verticalCompactor, type LayoutItem } from 'react-grid-layout'
 import type { Block } from '../types/block'
+import type { LayoutMode } from '../types/layoutMode'
 
 // Taille minimale d'un bloc, en pixels (en dessous, un chart devient illisible).
 export const MIN_BLOCK_SIZE_PX = 120
@@ -26,9 +28,10 @@ interface Rect {
   h: number
 }
 
-const overlaps = (a: Rect, b: Rect): boolean =>
+export const overlaps = (a: Rect, b: Rect): boolean =>
   a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h
 
+// Bloc -> élément de grille à une position donnée.
 function toLayoutItem(block: Block, x: number, y: number, w: number): LayoutItem {
   return {
     i: block.id,
@@ -40,19 +43,18 @@ function toLayoutItem(block: Block, x: number, y: number, w: number): LayoutItem
     minH: MIN_BLOCK_SIZE_PX,
     // `static` : la grille ne déplace ni ne redimensionne jamais ce bloc,
     // et les autres blocs ne peuvent pas le recouvrir
-    static: block.pin !== null,
+    static: block.locked,
   }
 }
 
-// Blocs verrouillés -> rectangles à leur position figée (ramenés dans la largeur disponible).
-function pinnedItems(blocks: Block[], containerWidth: number): LayoutItem[] {
-  return blocks.flatMap((block) => {
-    if (block.pin === null) return []
-    const w = Math.min(block.width, containerWidth)
-    const x = Math.max(0, Math.min(block.pin.x, containerWidth - w))
-    return [toLayoutItem(block, x, block.pin.y, w)]
-  })
+// Élément placé à la position enregistrée du bloc, ramené dans la largeur disponible.
+function toItemAtOwnPosition(block: Block, containerWidth: number): LayoutItem {
+  const w = Math.min(block.width, containerWidth)
+  const x = Math.max(0, Math.min(block.x, containerWidth - w))
+  return toLayoutItem(block, x, Math.max(0, block.y), w)
 }
+
+// --- Disposition automatique ------------------------------------------------
 
 // Place les blocs libres dans l'ordre, de gauche à droite, en passant à la ligne
 // quand la largeur disponible est dépassée (comme du texte qui retourne à la
@@ -99,37 +101,63 @@ function flowAround(blocks: Block[], obstacles: LayoutItem[], containerWidth: nu
   })
 }
 
-// Blocs -> grille.
-export function blocksToLayout(blocks: Block[], containerWidth: number): LayoutItem[] {
+function autoLayout(blocks: Block[], containerWidth: number): LayoutItem[] {
   const ordered = [...blocks].sort((a, b) => a.order - b.order)
-  const pinned = pinnedItems(ordered, containerWidth)
+  const locked = ordered
+    .filter((block) => block.locked)
+    .map((block) => toItemAtOwnPosition(block, containerWidth))
   const flowing = flowAround(
-    ordered.filter((block) => block.pin === null),
-    pinned,
+    ordered.filter((block) => !block.locked),
+    locked,
     containerWidth,
   )
 
   // On applique nous-mêmes le tassement vertical de la grille : la disposition
   // calculée ici est alors exactement celle qui s'affiche.
-  return [...verticalCompactor.compact([...pinned, ...flowing], containerWidth)]
+  return [...verticalCompactor.compact([...locked, ...flowing], containerWidth)]
 }
 
-// Emplacement où tomberait un bloc s'il était relâché maintenant : on retrouve
-// l'ordre de lecture d'après sa position actuelle, puis on regarde où ce nouvel
-// ordre le place dans le flux. Sert à afficher l'aperçu de destination.
-export function findDropSlot(
-  layout: readonly LayoutItem[],
+// --- Disposition libre ------------------------------------------------------
+
+// Chaque bloc est à sa position enregistrée. Seul cas où un bloc est déplacé
+// automatiquement : sa place est prise (un bloc a été agrandi depuis les
+// paramètres, ou l'écran est devenu plus étroit). Il descend alors juste sous
+// l'obstacle. Les blocs verrouillés sont placés en premier et ne cèdent jamais.
+function freeLayout(blocks: Block[], containerWidth: number): LayoutItem[] {
+  const placed = blocks
+    .filter((block) => block.locked)
+    .map((block) => toItemAtOwnPosition(block, containerWidth))
+
+  const movable = blocks
+    .filter((block) => !block.locked)
+    .sort((a, b) => a.y - b.y || a.x - b.x)
+
+  for (const block of movable) {
+    const item = toItemAtOwnPosition(block, containerWidth)
+    for (let attempt = 0; attempt < MAX_PLACEMENT_ATTEMPTS; attempt++) {
+      const hit = placed.find((other) => overlaps(item, other))
+      if (!hit) break
+      item.y = hit.y + hit.h
+    }
+    placed.push(item)
+  }
+  return placed
+}
+
+// --- Conversions ------------------------------------------------------------
+
+// Blocs -> grille, selon la disposition.
+export function blocksToLayout(
   blocks: Block[],
-  blockId: string,
   containerWidth: number,
-): LayoutItem | undefined {
-  const reordered = layoutToBlocks(layout, blocks)
-  return blocksToLayout(reordered, containerWidth).find((item) => item.i === blockId)
+  mode: LayoutMode,
+): LayoutItem[] {
+  return mode === 'free' ? freeLayout(blocks, containerWidth) : autoLayout(blocks, containerWidth)
 }
 
 // Grille -> blocs.
-// Retrouve l'ordre de lecture à partir des positions après un déplacement.
-// `blocks` fournit le type de chaque bloc, que la grille ne connaît pas.
+// Reporte taille et position de chaque bloc, et retrouve l'ordre de lecture
+// d'après les positions. `blocks` fournit le type de chaque bloc, que la grille ne connaît pas.
 export function layoutToBlocks(layout: readonly LayoutItem[], blocks: Block[]): Block[] {
   const blockById = new Map(blocks.map((block) => [block.id, block]))
 
@@ -147,13 +175,25 @@ export function layoutToBlocks(layout: readonly LayoutItem[], blocks: Block[]): 
     else rows.push([item])
   }
 
-  // 3. dans chaque ligne, de gauche à droite ; le rang final devient `order`.
-  //    Un bloc verrouillé garde sa position figée (`pin`) : seuls son rang et sa taille sont mis à jour.
+  // 3. dans chaque ligne, de gauche à droite ; le rang final devient `order`
   return rows
     .flatMap((row) => row.sort((a, b) => a.x - b.x))
-    .map(({ i, w, h }, order) => {
+    .map(({ i, x, y, w, h }, order) => {
       const block = blockById.get(i)
       if (!block) throw new Error(`Bloc inconnu dans la grille : "${i}"`)
-      return { ...block, width: w, height: h, order }
+      return { ...block, x, y, width: w, height: h, order }
     })
+}
+
+// Emplacement où tomberait un bloc s'il était relâché maintenant, en disposition
+// automatique : on retrouve l'ordre de lecture d'après sa position actuelle, puis
+// on regarde où ce nouvel ordre le place dans le flux. Sert à l'aperçu de destination.
+export function findAutoDropSlot(
+  layout: readonly LayoutItem[],
+  blocks: Block[],
+  blockId: string,
+  containerWidth: number,
+): LayoutItem | undefined {
+  const reordered = layoutToBlocks(layout, blocks)
+  return autoLayout(reordered, containerWidth).find((item) => item.i === blockId)
 }

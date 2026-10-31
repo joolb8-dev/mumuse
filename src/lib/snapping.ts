@@ -25,3 +25,16 @@ export function snapSize(value: number, neighborSizes: number[]): number {
   const snapped = nearestNeighbor ?? Math.round(value / SNAP_STEP_PX) * SNAP_STEP_PX
   return Math.max(MIN_BLOCK_SIZE_PX, snapped)
 }
+
+// Aimantation d'une position (x ou y) pendant un déplacement en disposition libre.
+// `edges` : positions des bords des blocs voisins sur le même axe (le bloc s'aligne dessus).
+// Sinon la position est arrondie au pas de la grille.
+export function snapPosition(value: number, edges: number[]): number {
+  let nearestEdge: number | null = null
+  for (const edge of edges) {
+    const gap = Math.abs(edge - value)
+    const isCloser = nearestEdge === null || gap < Math.abs(nearestEdge - value)
+    if (gap <= SNAP_THRESHOLD_PX && isCloser) nearestEdge = edge
+  }
+  return Math.max(0, nearestEdge ?? Math.round(value / SNAP_STEP_PX) * SNAP_STEP_PX)
+}

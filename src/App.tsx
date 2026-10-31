@@ -1,8 +1,9 @@
 // Point d'entrée de l'interface : assemble le thème, la barre du haut et la grille.
 // Il choisit aussi quoi afficher selon l'état des données : chargement, erreur, vide ou grille.
 
-import { useMemo } from 'react'
+import { useMemo, type CSSProperties } from 'react'
 import { Alert, CssBaseline, ThemeProvider, createTheme } from '@mui/material'
+import { useContainerWidth } from 'react-grid-layout'
 import './App.css'
 import Dashboard from './components/Dashboard'
 import StateMessage from './components/StateMessage'
@@ -10,8 +11,10 @@ import TopBar from './components/TopBar'
 import { themes } from './data/themes'
 import { useBlocks } from './hooks/useBlocks'
 import { useBlocksEditor } from './hooks/useBlocksEditor'
+import { useLayoutMode } from './hooks/useLayoutMode'
 import { useThemeSelection } from './hooks/useThemeSelection'
 import { useUnsavedChangesWarning } from './hooks/useUnsavedChangesWarning'
+import { MIN_BLOCK_SIZE_PX } from './lib/gridLayout'
 import type { AppTheme } from './types/theme'
 
 // Thème MUI construit à partir de notre définition de thème (voir data/themes.ts).
@@ -27,8 +30,17 @@ function toMuiTheme(theme: AppTheme) {
 }
 
 export default function App() {
+  // largeur disponible pour la grille, mesurée sur le conteneur (mise à jour au redimensionnement de la fenêtre)
+  const { width, containerRef, mounted } = useContainerWidth()
+  const containerWidth = Math.max(MIN_BLOCK_SIZE_PX, Math.floor(width))
+
   const { blocks, status, reload, save } = useBlocks()
-  const editor = useBlocksEditor(blocks, save)
+  const { layoutMode, switching, switchFailed, switchLayoutMode } = useLayoutMode(
+    blocks,
+    save,
+    containerWidth,
+  )
+  const editor = useBlocksEditor(blocks, save, layoutMode)
   const { theme, themeIndex, selectTheme } = useThemeSelection()
 
   const muiTheme = useMemo(() => toMuiTheme(theme), [theme])
@@ -57,11 +69,13 @@ export default function App() {
     )
   } else if (editor.displayedBlocks.length === 0) {
     content = <StateMessage message="Aucun bloc à afficher." />
-  } else {
+  } else if (mounted) {
     content = (
       <Dashboard
         blocks={editor.displayedBlocks}
         theme={theme}
+        layoutMode={layoutMode}
+        containerWidth={containerWidth}
         editing={editor.editing}
         onBlocksChange={editor.updateDraft}
       />
@@ -75,6 +89,9 @@ export default function App() {
         themes={themes}
         themeIndex={themeIndex}
         onSelectTheme={selectTheme}
+        layoutMode={layoutMode}
+        layoutSwitchDisabled={editor.editing || switching}
+        onSelectLayoutMode={switchLayoutMode}
         editing={editor.editing}
         hasUnsavedChanges={editor.hasUnsavedChanges}
         saving={editor.saving}
@@ -82,12 +99,25 @@ export default function App() {
         onSaveEditing={editor.saveEditing}
         onCancelEditing={handleCancelEditing}
       />
-      {editor.saveFailed && (
+      {(editor.saveFailed || switchFailed) && (
         <Alert severity="error" className="save-error">
-          L'enregistrement a échoué. Vos modifications sont conservées, réessayez.
+          {switchFailed
+            ? 'Le changement de disposition a échoué, réessayez.'
+            : "L'enregistrement a échoué. Vos modifications sont conservées, réessayez."}
         </Alert>
       )}
-      {content}
+
+      {/* le conteneur est toujours présent pour que la largeur soit mesurée ;
+          il porte aussi la couleur du cadre d'aperçu (voir App.css) */}
+      <div className="dashboard">
+        <div
+          ref={containerRef}
+          className="dashboard__grid"
+          style={{ '--ghost-color': theme.primary } as CSSProperties}
+        >
+          {content}
+        </div>
+      </div>
     </ThemeProvider>
   )
 }
