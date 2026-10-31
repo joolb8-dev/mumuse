@@ -5,18 +5,24 @@
 //  - `draft`  : la copie en cours de modification (null hors mode édition)
 //
 // Pendant l'édition on travaille sur la copie ; "Enregistrer" l'envoie à la
-// couche api. Si l'envoi échoue, on reste en édition pour ne rien perdre.
+// couche api, "Annuler" la jette. Si l'envoi échoue, on reste en édition pour
+// ne rien perdre.
 
 import { useState } from 'react'
+import { areBlocksEqual } from '../lib/blocks'
 import type { Block } from '../types/block'
 
 export interface UseBlocksEditorResult {
   // blocs à afficher : la copie pendant l'édition, sinon la version enregistrée
   displayedBlocks: Block[]
   editing: boolean
+  // la copie diffère de la version enregistrée
+  hasUnsavedChanges: boolean
   saving: boolean
   saveFailed: boolean
-  toggleEditing: () => void
+  startEditing: () => void
+  saveEditing: () => void
+  cancelEditing: () => void
   updateDraft: (blocks: Block[]) => void
 }
 
@@ -28,15 +34,14 @@ export function useBlocksEditor(
   const [saving, setSaving] = useState(false)
   const [saveFailed, setSaveFailed] = useState(false)
 
-  const toggleEditing = () => {
-    // "Modifier" : on ouvre une copie
-    if (draft === null) {
-      setSaveFailed(false)
-      setDraft(blocks)
-      return
-    }
+  const startEditing = () => {
+    setSaveFailed(false)
+    setDraft(blocks)
+  }
 
-    // "Enregistrer" : on envoie la copie, puis on referme l'édition
+  // Envoie la copie, puis referme l'édition (en cas d'échec on reste en édition).
+  const saveEditing = () => {
+    if (draft === null) return
     setSaving(true)
     setSaveFailed(false)
     save(draft)
@@ -45,12 +50,21 @@ export function useBlocksEditor(
       .finally(() => setSaving(false))
   }
 
+  // Jette la copie : l'affichage revient à la dernière version enregistrée.
+  const cancelEditing = () => {
+    setSaveFailed(false)
+    setDraft(null)
+  }
+
   return {
     displayedBlocks: draft ?? blocks,
     editing: draft !== null,
+    hasUnsavedChanges: draft !== null && !areBlocksEqual(draft, blocks),
     saving,
     saveFailed,
-    toggleEditing,
+    startEditing,
+    saveEditing,
+    cancelEditing,
     updateDraft: setDraft,
   }
 }

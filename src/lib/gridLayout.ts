@@ -51,6 +51,19 @@ export function blocksToLayout(blocks: Block[], containerWidth: number): LayoutI
     })
 }
 
+// Emplacement où tomberait un bloc s'il était relâché maintenant : on retrouve
+// l'ordre de lecture d'après sa position actuelle, puis on regarde où ce nouvel
+// ordre le place dans le flux. Sert à afficher l'aperçu de destination.
+export function findDropSlot(
+  layout: readonly LayoutItem[],
+  blocks: Block[],
+  blockId: string,
+  containerWidth: number,
+): LayoutItem | undefined {
+  const reordered = layoutToBlocks(layout, blocks)
+  return blocksToLayout(reordered, containerWidth).find((item) => item.i === blockId)
+}
+
 // Grille -> blocs.
 // Retrouve l'ordre de lecture à partir des positions après un déplacement.
 // `blocks` fournit le type de chaque bloc, que la grille ne connaît pas.

@@ -11,6 +11,7 @@ import { themes } from './data/themes'
 import { useBlocks } from './hooks/useBlocks'
 import { useBlocksEditor } from './hooks/useBlocksEditor'
 import { useThemeSelection } from './hooks/useThemeSelection'
+import { useUnsavedChangesWarning } from './hooks/useUnsavedChangesWarning'
 import type { AppTheme } from './types/theme'
 
 // Thème MUI construit à partir de notre définition de thème (voir data/themes.ts).
@@ -31,6 +32,16 @@ export default function App() {
   const { theme, themeIndex, selectTheme } = useThemeSelection()
 
   const muiTheme = useMemo(() => toMuiTheme(theme), [theme])
+
+  useUnsavedChangesWarning(editor.hasUnsavedChanges)
+
+  // Annuler jette les modifications : on demande confirmation s'il y en a.
+  const handleCancelEditing = () => {
+    if (editor.hasUnsavedChanges && !window.confirm('Abandonner les modifications non enregistrées ?')) {
+      return
+    }
+    editor.cancelEditing()
+  }
 
   // Contenu sous la barre : on traite d'abord les cas sans grille à afficher.
   let content
@@ -65,8 +76,11 @@ export default function App() {
         themeIndex={themeIndex}
         onSelectTheme={selectTheme}
         editing={editor.editing}
+        hasUnsavedChanges={editor.hasUnsavedChanges}
         saving={editor.saving}
-        onToggleEditing={editor.toggleEditing}
+        onStartEditing={editor.startEditing}
+        onSaveEditing={editor.saveEditing}
+        onCancelEditing={handleCancelEditing}
       />
       {editor.saveFailed && (
         <Alert severity="error" className="save-error">
