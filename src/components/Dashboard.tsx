@@ -17,8 +17,11 @@ import type { Block } from '../types/block'
 import type { AppTheme } from '../types/theme'
 import BlockCard from './BlockCard'
 
-// Poignées de redimensionnement : bord droit, bord du bas et coin.
-const RESIZE_HANDLES: ResizeHandleAxis[] = ['e', 's', 'se']
+// Poignées de redimensionnement : les 4 côtés et les 4 coins.
+// Les positions sont recalculées d'après l'ordre après chaque redimensionnement
+// (voir lib/gridLayout.ts) : agrandir par la gauche ou le haut change donc la
+// taille du bloc, mais il reste à sa place dans le flux.
+const RESIZE_HANDLES: ResizeHandleAxis[] = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw']
 
 interface DashboardProps {
   blocks: Block[]
