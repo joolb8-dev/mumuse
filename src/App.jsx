@@ -206,7 +206,7 @@ export default function App() {
                 containerPadding: [0, 0],
               }}
               dragConfig={{ enabled: editing }}
-              resizeConfig={{ enabled: editing }}
+              resizeConfig={{ enabled: editing, handles: ['e', 's', 'se'] }}
               compactor={verticalCompactor}
             >
               {layout.map(({ i }) => {
