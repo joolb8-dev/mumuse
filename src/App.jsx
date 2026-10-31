@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import ReactGridLayout, { useContainerWidth, verticalCompactor } from 'react-grid-layout'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
@@ -144,6 +144,9 @@ function toOrderedBlocks(layout, blocks) {
 export default function App() {
   const { width, containerRef, mounted } = useContainerWidth()
   const [blocks, setBlocks] = useState(loadBlocks)
+  useEffect(() => {
+    console.log(blocks)
+  }, [blocks])
   const [draft, setDraft] = useState(null)
   const editing = draft !== null
 
@@ -157,7 +160,6 @@ export default function App() {
       return
     }
     const saved = toOrderedBlocks(draft, blocks)
-    console.log(saved)
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(saved))
     } catch {
