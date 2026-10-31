@@ -147,25 +147,31 @@ export default function App() {
   useEffect(() => {
     console.log(blocks)
   }, [blocks])
+  // blocs en cours de modification (null hors mode édition)
   const [draft, setDraft] = useState(null)
   const editing = draft !== null
 
   const containerWidth = Math.max(MIN_SIZE, Math.floor(width))
-  const flow = useMemo(() => flowLayout(blocks, containerWidth), [blocks, containerWidth])
-  const layout = draft ?? flow
+  const layout = useMemo(
+    () => flowLayout(draft ?? blocks, containerWidth),
+    [draft, blocks, containerWidth],
+  )
+
+  // Après un déplacement ou un redimensionnement, on retrouve l'ordre et on
+  // re-tasse tout de suite : ce qu'on voit est ce qui sera enregistré.
+  const settle = (next) => setDraft(toOrderedBlocks(next, draft))
 
   const toggleEditing = () => {
     if (!editing) {
-      setDraft(flow)
+      setDraft(blocks)
       return
     }
-    const saved = toOrderedBlocks(draft, blocks)
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(saved))
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(draft))
     } catch {
       // stockage indisponible : la disposition reste valable pour la session
     }
-    setBlocks(saved)
+    setBlocks(draft)
     setDraft(null)
   }
 
@@ -191,7 +197,8 @@ export default function App() {
             <ReactGridLayout
               width={containerWidth}
               layout={layout}
-              onLayoutChange={(next) => editing && setDraft(next)}
+              onDragStop={settle}
+              onResizeStop={settle}
               gridConfig={{
                 cols: containerWidth,
                 rowHeight: 1,
