@@ -184,16 +184,3 @@ export function layoutToBlocks(layout: readonly LayoutItem[], blocks: Block[]): 
       return { ...block, x, y, width: w, height: h, order }
     })
 }
-
-// Emplacement où tomberait un bloc s'il était relâché maintenant, en disposition
-// automatique : on retrouve l'ordre de lecture d'après sa position actuelle, puis
-// on regarde où ce nouvel ordre le place dans le flux. Sert à l'aperçu de destination.
-export function findAutoDropSlot(
-  layout: readonly LayoutItem[],
-  blocks: Block[],
-  blockId: string,
-  containerWidth: number,
-): LayoutItem | undefined {
-  const reordered = layoutToBlocks(layout, blocks)
-  return autoLayout(reordered, containerWidth).find((item) => item.i === blockId)
-}

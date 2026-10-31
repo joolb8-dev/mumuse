@@ -79,7 +79,6 @@ export default function Dashboard({
       <ReactGridLayout
         width={containerWidth}
         layout={layout}
-        onDrag={interactions.onDrag}
         onDragStop={interactions.onDragStop}
         onResize={interactions.onResize}
         onResizeStop={interactions.onResizeStop}
