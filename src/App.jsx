@@ -2,32 +2,128 @@ import { useEffect, useMemo, useState } from 'react'
 import ReactGridLayout, { useContainerWidth, verticalCompactor } from 'react-grid-layout'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
-import { AppBar, Box, Button, CssBaseline, Paper, Toolbar, Typography } from '@mui/material'
+import {
+  AppBar,
+  Box,
+  Button,
+  CssBaseline,
+  Paper,
+  ThemeProvider,
+  Toolbar,
+  Typography,
+  createTheme,
+} from '@mui/material'
 import { BarChart } from '@mui/x-charts/BarChart'
 import { LineChart } from '@mui/x-charts/LineChart'
 import { PieChart } from '@mui/x-charts/PieChart'
 import { ScatterChart } from '@mui/x-charts/ScatterChart'
-import { Gauge } from '@mui/x-charts/Gauge'
+import { Gauge, gaugeClasses } from '@mui/x-charts/Gauge'
 
 const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin']
+
+// Chaque thème règle le mode MUI, la palette des charts et quelques options de forme
+const themes = [
+  {
+    name: 'Theme 1',
+    mode: 'light',
+    primary: '#2a78d6',
+    background: '#f4f4f1',
+    colors: ['#2a78d6', '#85b7eb', '#cfe1f7'],
+    outlined: true,
+    radius: 8,
+    barRadius: 4,
+    innerRadius: 60,
+    paddingAngle: 0,
+    cornerRadius: 0,
+    area: false,
+    curve: 'linear',
+  },
+  {
+    name: 'Theme 2',
+    mode: 'dark',
+    primary: '#3987e5',
+    background: '#121211',
+    colors: ['#3987e5', '#199e70', '#d95926'],
+    outlined: true,
+    radius: 8,
+    barRadius: 4,
+    innerRadius: 55,
+    paddingAngle: 0,
+    cornerRadius: 0,
+    area: true,
+    curve: 'monotoneX',
+  },
+  {
+    name: 'Theme 3',
+    mode: 'light',
+    primary: '#e8836a',
+    background: '#f6f1ee',
+    colors: ['#e8836a', '#f4b8a6', '#f9dcd2'],
+    outlined: false,
+    radius: 16,
+    barRadius: 8,
+    innerRadius: 50,
+    paddingAngle: 3,
+    cornerRadius: 8,
+    area: true,
+    curve: 'monotoneX',
+  },
+  {
+    name: 'Theme 4',
+    mode: 'light',
+    primary: '#52514e',
+    background: '#f4f4f1',
+    colors: ['#b4b2a9', '#d3d1c7', '#c2410c'],
+    outlined: true,
+    radius: 8,
+    barRadius: 4,
+    innerRadius: 60,
+    paddingAngle: 0,
+    cornerRadius: 0,
+    area: false,
+    curve: 'linear',
+  },
+  {
+    name: 'Theme 5',
+    mode: 'light',
+    primary: '#334155',
+    background: '#eceff2',
+    colors: ['#475569', '#b45309', '#94a3b8'],
+    outlined: true,
+    radius: 6,
+    barRadius: 3,
+    innerRadius: 55,
+    paddingAngle: 0,
+    cornerRadius: 0,
+    area: false,
+    curve: 'linear',
+  },
+]
 
 const chartTypes = {
   bar: {
     title: 'Ventes (bar)',
-    render: () => (
+    render: (t) => (
       <BarChart
-        xAxis={[{ scaleType: 'band', data: months }]}
+        colors={t.colors}
+        borderRadius={t.barRadius}
+        grid={{ horizontal: true }}
+        xAxis={[{ scaleType: 'band', data: months, disableLine: true, disableTicks: true }]}
+        yAxis={[{ disableLine: true, disableTicks: true }]}
         series={[{ data: [4, 7, 3, 9, 6, 8] }]}
       />
     ),
   },
   donut: {
     title: 'Répartition (donut)',
-    render: () => (
+    render: (t) => (
       <PieChart
+        colors={t.colors}
         series={[
           {
-            innerRadius: 40,
+            innerRadius: t.innerRadius,
+            paddingAngle: t.paddingAngle,
+            cornerRadius: t.cornerRadius,
             data: [
               { id: 0, value: 10, label: 'A' },
               { id: 1, value: 15, label: 'B' },
@@ -40,17 +136,22 @@ const chartTypes = {
   },
   line: {
     title: 'Évolution (line)',
-    render: () => (
+    render: (t) => (
       <LineChart
-        xAxis={[{ scaleType: 'point', data: months }]}
-        series={[{ data: [2, 5, 3, 8, 6, 10] }]}
+        colors={t.colors}
+        grid={{ horizontal: true }}
+        xAxis={[{ scaleType: 'point', data: months, disableLine: true, disableTicks: true }]}
+        yAxis={[{ disableLine: true, disableTicks: true }]}
+        series={[{ data: [2, 5, 3, 8, 6, 10], area: t.area, curve: t.curve, showMark: false }]}
       />
     ),
   },
   scatter: {
     title: 'Nuage (scatter)',
-    render: () => (
+    render: (t) => (
       <ScatterChart
+        colors={t.colors}
+        grid={{ horizontal: true }}
         series={[
           {
             data: [
@@ -67,7 +168,15 @@ const chartTypes = {
   },
   gauge: {
     title: 'Objectif (gauge)',
-    render: () => <Gauge value={72} valueMin={0} valueMax={100} />,
+    render: (t) => (
+      <Gauge
+        value={72}
+        valueMin={0}
+        valueMax={100}
+        cornerRadius={t.cornerRadius ? '50%' : 0}
+        sx={{ [`& .${gaugeClasses.valueArc}`]: { fill: t.colors[0] } }}
+      />
+    ),
   },
 }
 
@@ -82,6 +191,16 @@ const initialBlocks = [
 
 const MIN_SIZE = 120
 const STORAGE_KEY = 'mumuse-blocks'
+const THEME_KEY = 'mumuse-theme'
+
+function loadThemeIndex() {
+  try {
+    const saved = Number(localStorage.getItem(THEME_KEY))
+    return Number.isInteger(saved) && saved >= 0 && saved < themes.length ? saved : 0
+  } catch {
+    return 0
+  }
+}
 
 function loadBlocks() {
   try {
@@ -177,14 +296,50 @@ export default function App() {
 
   const byId = Object.fromEntries(blocks.map((b) => [b.id, b]))
 
+  const [themeIndex, setThemeIndex] = useState(loadThemeIndex)
+  const t = themes[themeIndex]
+  const muiTheme = useMemo(
+    () =>
+      createTheme({
+        palette: {
+          mode: t.mode,
+          primary: { main: t.primary },
+          background: { default: t.background },
+        },
+        shape: { borderRadius: t.radius },
+      }),
+    [t],
+  )
+
+  const selectTheme = (index) => {
+    setThemeIndex(index)
+    try {
+      localStorage.setItem(THEME_KEY, String(index))
+    } catch {
+      // stockage indisponible : le thème reste valable pour la session
+    }
+  }
+
   return (
-    <>
+    <ThemeProvider theme={muiTheme}>
       <CssBaseline />
       <AppBar position="static" sx={{ width: '100%' }}>
-        <Toolbar>
+        <Toolbar sx={{ gap: 1 }}>
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
             Mumuse
           </Typography>
+          {themes.map((theme, index) => (
+            <Button
+              key={theme.name}
+              color="inherit"
+              size="small"
+              variant={index === themeIndex ? 'contained' : 'text'}
+              sx={index === themeIndex ? { bgcolor: 'rgba(255,255,255,0.25)' } : undefined}
+              onClick={() => selectTheme(index)}
+            >
+              {theme.name}
+            </Button>
+          ))}
           <Button color="inherit" variant="outlined" onClick={toggleEditing}>
             {editing ? 'Enregistrer' : 'Modifier'}
           </Button>
@@ -214,7 +369,8 @@ export default function App() {
                 return (
                   <Box key={i} sx={{ p: 1, boxSizing: 'border-box' }}>
                     <Paper
-                      elevation={2}
+                      variant={t.outlined ? 'outlined' : 'elevation'}
+                      elevation={t.outlined ? 0 : 2}
                       sx={{
                         display: 'flex',
                         flexDirection: 'column',
@@ -227,7 +383,7 @@ export default function App() {
                       <Typography variant="subtitle2" sx={{ userSelect: 'none' }}>
                         {chart.title}
                       </Typography>
-                      <Box sx={{ flex: 1, minHeight: 0 }}>{chart.render()}</Box>
+                      <Box sx={{ flex: 1, minHeight: 0 }}>{chart.render(t)}</Box>
                     </Paper>
                   </Box>
                 )
@@ -236,6 +392,6 @@ export default function App() {
           )}
         </div>
       </Box>
-    </>
+    </ThemeProvider>
   )
 }
