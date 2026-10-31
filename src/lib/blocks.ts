@@ -2,6 +2,9 @@
 
 import type { Block } from '../types/block'
 
+// Un bloc verrouillé est un bloc qui a une position figée.
+export const isLocked = (block: Block): boolean => block.pin !== null
+
 // Deux listes sont égales si elles contiennent les mêmes blocs avec les mêmes
 // valeurs, quel que soit leur ordre dans le tableau. Sert à savoir si une copie
 // en cours de modification diffère de la version enregistrée.
@@ -17,7 +20,8 @@ export function areBlocksEqual(a: Block[], b: Block[]): boolean {
       other.width === block.width &&
       other.height === block.height &&
       other.order === block.order &&
-      other.locked === block.locked
+      other.pin?.x === block.pin?.x &&
+      other.pin?.y === block.pin?.y
     )
   })
 }

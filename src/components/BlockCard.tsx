@@ -12,6 +12,7 @@ import LockOpenIcon from '@mui/icons-material/LockOpen'
 import OpenInFullIcon from '@mui/icons-material/OpenInFull'
 import { IconButton, Paper, Typography } from '@mui/material'
 import { chartTypes } from '../data/chartTypes'
+import { isLocked } from '../lib/blocks'
 import type { Block } from '../types/block'
 import type { AppTheme } from '../types/theme'
 
@@ -28,9 +29,10 @@ const BlockCard = forwardRef<HTMLDivElement, BlockCardProps>(function BlockCard(
   ref,
 ) {
   const chart = chartTypes[block.type]
+  const locked = isLocked(block)
 
   return (
-    <div ref={ref} className={`block ${block.locked ? 'is-locked' : ''} ${className}`} {...gridProps}>
+    <div ref={ref} className={`block ${locked ? 'is-locked' : ''} ${className}`} {...gridProps}>
       <Paper
         variant={theme.outlined ? 'outlined' : 'elevation'}
         elevation={theme.outlined ? 0 : 2}
@@ -42,10 +44,10 @@ const BlockCard = forwardRef<HTMLDivElement, BlockCardProps>(function BlockCard(
           <IconButton
             size="small"
             className="block-card__action block-card__lock"
-            aria-label={block.locked ? 'Déverrouiller le bloc' : 'Verrouiller le bloc'}
+            aria-label={locked ? 'Déverrouiller le bloc' : 'Verrouiller le bloc'}
             onClick={() => onToggleLock(block.id)}
           >
-            {block.locked ? <LockIcon fontSize="inherit" /> : <LockOpenIcon fontSize="inherit" />}
+            {locked ? <LockIcon fontSize="inherit" /> : <LockOpenIcon fontSize="inherit" />}
           </IconButton>
         ) : (
           <IconButton

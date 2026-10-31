@@ -12,6 +12,7 @@ import ReactGridLayout, {
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
 import { useGridInteractions } from '../hooks/useGridInteractions'
+import { isLocked } from '../lib/blocks'
 import { blocksToLayout, MIN_BLOCK_SIZE_PX } from '../lib/gridLayout'
 import type { Block } from '../types/block'
 import type { AppTheme } from '../types/theme'
@@ -49,11 +50,18 @@ export default function Dashboard({ blocks, theme, editing, onBlocksChange }: Da
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const expandedBlock = blocks.find((block) => block.id === expandedId) ?? null
 
-  // Verrouille ou déverrouille un bloc (la copie en cours de modification change, rien n'est enregistré).
-  const handleToggleLock = (blockId: string) =>
+  // Verrouille un bloc à sa place actuelle, ou le déverrouille. La copie en cours de
+  // modification change ; rien n'est enregistré avant « Enregistrer ».
+  const handleToggleLock = (blockId: string) => {
+    const item = layout.find((entry) => entry.i === blockId)
     onBlocksChange(
-      blocks.map((block) => (block.id === blockId ? { ...block, locked: !block.locked } : block)),
+      blocks.map((block) => {
+        if (block.id !== blockId) return block
+        const pin = isLocked(block) || !item ? null : { x: item.x, y: item.y }
+        return { ...block, pin }
+      }),
     )
+  }
 
   return (
     <div className="dashboard">
