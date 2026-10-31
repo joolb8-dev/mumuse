@@ -20,8 +20,8 @@ export function useBlocks(): UseBlocksResult {
   const [blocks, setBlocks] = useState<Block[]>([])
   const [status, setStatus] = useState<LoadStatus>('loading')
 
-  const reload = useCallback(() => {
-    setStatus('loading')
+  // Demande les blocs à l'api et met à jour le statut selon le résultat.
+  const fetchBlocks = useCallback(() => {
     blocksApi
       .list()
       .then((loaded) => {
@@ -31,8 +31,14 @@ export function useBlocks(): UseBlocksResult {
       .catch(() => setStatus('error'))
   }, [])
 
-  // chargement au premier affichage
-  useEffect(reload, [reload])
+  // chargement au premier affichage (le statut vaut déjà 'loading')
+  useEffect(fetchBlocks, [fetchBlocks])
+
+  // « Réessayer » après une erreur : on repasse en chargement, puis on redemande.
+  const reload = useCallback(() => {
+    setStatus('loading')
+    fetchBlocks()
+  }, [fetchBlocks])
 
   // Liste des blocs dans la console, au chargement et après chaque enregistrement.
   useEffect(() => {

@@ -1,16 +1,30 @@
-# React + Vite
+# Mumuse
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Un tableau de bord de charts réorganisables : chaque chart est un bloc que l'on déplace, redimensionne et verrouille sur une grille, en disposition automatique ou libre, avec cinq thèmes.
 
-Currently, two official plugins are available:
+**React 19 · TypeScript · Vite · MUI · MUI X Charts · react-grid-layout**
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Démarrer
 
-## React Compiler
+```bash
+npm install
+npm run dev      # http://localhost:5173
+npm run build    # vérifie les types puis construit la version de production
+npm run lint
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Documentation
 
-## Expanding the Oxlint configuration
+📖 **[Comment l'application est construite](docs/ARCHITECTURE.md)** : les couches, l'organisation des fichiers, le fonctionnement des dispositions et du mode Modifier, avec des schémas, et un guide pour modifier l'application.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+## En bref
+
+```
+src/
+├── components/   ce qu'on voit à l'écran
+├── hooks/        état et logique
+├── lib/          calculs purs
+├── api/          seul accès aux données (aujourd'hui : un faux serveur)
+├── data/         thèmes et types de charts
+└── types/        définitions TypeScript
+```

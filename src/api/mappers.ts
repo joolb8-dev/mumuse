@@ -21,8 +21,8 @@ export function toBlock(dto: BlockDto): Block {
     width: dto.w,
     height: dto.h,
     order: dto.position,
-    x: dto.x ?? dto.pin_x ?? 0,
-    y: dto.y ?? dto.pin_y ?? 0,
+    x: dto.x ?? 0,
+    y: dto.y ?? 0,
     locked: dto.locked ?? false,
   }
 }

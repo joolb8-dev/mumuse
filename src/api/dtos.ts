@@ -14,6 +14,4 @@ export interface BlockDto {
   x?: number
   y?: number
   locked?: boolean
-  pin_x?: number // ancien nom de x, pour les blocs verrouillés enregistrés avant la disposition libre
-  pin_y?: number // ancien nom de y
 }

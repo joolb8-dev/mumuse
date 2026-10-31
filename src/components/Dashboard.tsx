@@ -13,6 +13,7 @@ import ReactGridLayout, {
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
 import { useGridInteractions } from '../hooks/useGridInteractions'
+import { toggleLock } from '../lib/blocks'
 import { blocksToLayout } from '../lib/gridLayout'
 import type { Block } from '../types/block'
 import type { LayoutMode } from '../types/layoutMode'
@@ -65,13 +66,7 @@ export default function Dashboard({
   // modification change ; rien n'est enregistré avant « Enregistrer ».
   const handleToggleLock = (blockId: string) => {
     const item = layout.find((entry) => entry.i === blockId)
-    onBlocksChange(
-      blocks.map((block) => {
-        if (block.id !== blockId) return block
-        // on garde la position affichée : c'est elle qui est figée
-        return { ...block, locked: !block.locked, x: item?.x ?? block.x, y: item?.y ?? block.y }
-      }),
-    )
+    onBlocksChange(toggleLock(blocks, blockId, item))
   }
 
   return (
