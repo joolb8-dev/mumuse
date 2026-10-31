@@ -1,6 +1,6 @@
 // Barre du haut : titre, boutons de thème et bouton Modifier / Enregistrer.
 
-import { AppBar, Button, Toolbar, Typography } from '@mui/material'
+import { AppBar, Button, Toolbar } from '@mui/material'
 import type { AppTheme } from '../types/theme'
 
 interface TopBarProps {
@@ -23,22 +23,21 @@ export default function TopBar({
   return (
     <AppBar position="static" className="top-bar">
       <Toolbar className="top-bar__toolbar">
-        <Typography variant="h6" className="top-bar__title">
-          Mumuse
-        </Typography>
-
-        {themes.map((theme, index) => (
-          <Button
-            key={theme.name}
-            color="inherit"
-            size="small"
-            // le thème actif est mis en évidence par la classe is-active (voir App.css)
-            className={index === themeIndex ? 'theme-button is-active' : 'theme-button'}
-            onClick={() => onSelectTheme(index)}
-          >
-            {theme.name}
-          </Button>
-        ))}
+        {/* boutons de thème à gauche ; ce bloc prend la place restante et pousse Modifier à droite */}
+        <div className="top-bar__themes">
+          {themes.map((theme, index) => (
+            <Button
+              key={theme.name}
+              color="inherit"
+              size="small"
+              // le thème actif est mis en évidence par la classe is-active (voir App.css)
+              className={index === themeIndex ? 'theme-button is-active' : 'theme-button'}
+              onClick={() => onSelectTheme(index)}
+            >
+              {theme.name}
+            </Button>
+          ))}
+        </div>
 
         <Button color="inherit" variant="outlined" disabled={saving} onClick={onToggleEditing}>
           {editing ? 'Enregistrer' : 'Modifier'}

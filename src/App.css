@@ -12,9 +12,12 @@
   gap: 8px;
 }
 
-/* le titre pousse les boutons vers la droite */
-.top-bar__title {
+/* groupe de boutons de thème à gauche ; il prend la place restante,
+   ce qui pousse le bouton Modifier / Enregistrer vers la droite */
+.top-bar__themes {
+  display: flex;
   flex-grow: 1;
+  gap: 8px;
 }
 
 /* thème actif : léger fond clair sur la barre colorée */
