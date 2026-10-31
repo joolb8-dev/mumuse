@@ -79,14 +79,35 @@ const initialLayout = [
   { i: 'objectif', x: 6, y: 8, w: 6, h: 8 },
 ]
 
+const STORAGE_KEY = 'mumuse-layout'
+
+function loadLayout() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY))
+    const valid =
+      Array.isArray(saved) &&
+      saved.length === initialLayout.length &&
+      initialLayout.every(({ i }) => saved.some((item) => item.i === i))
+    return valid ? saved : initialLayout
+  } catch {
+    return initialLayout
+  }
+}
+
 export default function App() {
   const { width, containerRef, mounted } = useContainerWidth()
-  const [layout, setLayout] = useState(initialLayout)
+  const [layout, setLayout] = useState(loadLayout)
   const [editing, setEditing] = useState(false)
 
   const toggleEditing = () => {
     if (editing) {
-      console.log(layout.map(({ i, x, y, w, h }) => ({ i, x, y, w, h })))
+      const toSave = layout.map(({ i, x, y, w, h }) => ({ i, x, y, w, h }))
+      console.log(toSave)
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave))
+      } catch {
+        // stockage indisponible : le layout reste valable pour la session
+      }
     }
     setEditing(!editing)
   }
