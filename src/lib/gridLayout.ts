@@ -13,7 +13,8 @@ import type { LayoutItem } from 'react-grid-layout'
 import type { Block } from '../types/block'
 import type { LayoutMode } from '../types/layoutMode'
 import { autoLayout } from './autoLayout'
-import { freeLayout } from './freeLayout'
+import { freeLayout, stackedLayout } from './freeLayout'
+import { isStacked, scaleBlocks, scaleFor, toDisplayedSpan } from './responsive'
 
 // Blocs -> grille : position de chaque bloc, selon la disposition.
 export function blocksToLayout(
@@ -21,7 +22,9 @@ export function blocksToLayout(
   containerWidth: number,
   mode: LayoutMode,
 ): LayoutItem[] {
-  return mode === 'free' ? freeLayout(blocks, containerWidth) : autoLayout(blocks, containerWidth)
+  if (mode === 'auto') return autoLayout(blocks, containerWidth)
+  if (isStacked(mode, containerWidth)) return stackedLayout(blocks, containerWidth)
+  return freeLayout(scaleBlocks(blocks, scaleFor(mode, containerWidth)), containerWidth)
 }
 
 // Classe les éléments de la grille dans l'ordre de lecture : ligne par ligne,
@@ -45,13 +48,32 @@ function sortInReadingOrder(layout: readonly LayoutItem[]): LayoutItem[] {
 
 // Grille -> blocs : reporte taille et position de chaque élément dans son bloc, et
 // recalcule `order` d'après l'ordre de lecture. `blocks` fournit le type de chaque
-// bloc, que la grille ne connaît pas.
-export function layoutToBlocks(layout: readonly LayoutItem[], blocks: Block[]): Block[] {
+// bloc, que la grille ne connaît pas. `mode` est la disposition dans laquelle les blocs
+// seront enregistrés : en libre, x et largeur sont ramenés à la largeur de référence.
+export function layoutToBlocks(
+  layout: readonly LayoutItem[],
+  blocks: Block[],
+  mode: LayoutMode,
+  containerWidth: number,
+): Block[] {
   const blockById = new Map(blocks.map((block) => [block.id, block]))
+  const scale = scaleFor(mode, containerWidth)
 
   return sortInReadingOrder(layout).map(({ i, x, y, w, h }, order) => {
     const block = blockById.get(i)
     if (!block) throw new Error(`Bloc inconnu dans la grille : "${i}"`)
-    return { ...block, x, y, width: w, height: h, order }
+
+    // un bloc que l'utilisateur n'a pas touché garde ses valeurs exactes (sinon les
+    // arrondis feraient passer chaque bloc pour modifié)
+    const shown = toDisplayedSpan(block, scale)
+    const untouched = shown.x === x && shown.width === w
+    return {
+      ...block,
+      x: untouched ? block.x : x / scale,
+      y,
+      width: untouched ? block.width : w / scale,
+      height: h,
+      order,
+    }
   })
 }

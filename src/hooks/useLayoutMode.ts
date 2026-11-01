@@ -8,6 +8,7 @@
 import { useEffect, useState } from 'react'
 import { preferencesApi } from '../api/preferencesApi'
 import { blocksToLayout, layoutToBlocks } from '../lib/gridLayout'
+import { isStacked } from '../lib/responsive'
 import type { Block } from '../types/block'
 import type { LayoutMode } from '../types/layoutMode'
 
@@ -42,8 +43,11 @@ export function useLayoutMode(
   const switchLayoutMode = (mode: LayoutMode) => {
     if (mode === layoutMode || switching) return
 
-    // positions actuellement affichées, reportées dans les blocs
-    const converted = layoutToBlocks(blocksToLayout(blocks, containerWidth, layoutMode), blocks)
+    // positions actuellement affichées, reportées dans les blocs (enregistrées pour la
+    // nouvelle disposition). Une disposition libre empilée n'a pas de positions à reporter.
+    const converted = isStacked(layoutMode, containerWidth)
+      ? blocks
+      : layoutToBlocks(blocksToLayout(blocks, containerWidth, layoutMode), blocks, mode, containerWidth)
 
     setSwitching(true)
     setSwitchFailed(false)

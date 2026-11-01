@@ -135,7 +135,8 @@ src/
 ├── lib/                          CALCULS PURS
 │   ├── gridLayout.ts             Blocs ↔ grille (point d'entrée), ordre de lecture
 │   ├── autoLayout.ts             Disposition automatique
-│   ├── freeLayout.ts             Disposition libre
+│   ├── freeLayout.ts             Disposition libre (et colonne unique sur écran étroit)
+│   ├── responsive.ts             Mise à l'échelle de la disposition libre selon la largeur d'écran
 │   ├── layoutItem.ts             Briques communes : taille minimale, chevauchement…
 │   ├── snapping.ts               Aimantation douce (voisins, pas de 10 px)
 │   ├── blocks.ts                 Comparer deux listes de blocs, verrouiller un bloc
@@ -172,6 +173,8 @@ Tout tourne autour d'un objet, le **bloc** (`types/block.ts`) :
 | `order` | Rang de lecture : de gauche à droite, puis ligne par ligne |
 | `x`, `y` | Position en pixels depuis le coin haut-gauche de la grille |
 | `locked` | Verrouillé : ne bouge pas et personne ne peut prendre sa place |
+
+**Responsive en disposition libre** (`lib/responsive.ts`) : en libre, `x` et `width` sont enregistrés pour une largeur de référence de 1200 px puis mis à l'échelle de la largeur réelle (les hauteurs restent en pixels). Sous 700 px, les blocs s'empilent en une colonne (dans l'ordre de lecture) et on ne peut plus les déplacer ni les verrouiller. La disposition automatique est déjà fluide.
 
 **Qui utilise `x` et `y` ?** Tous les blocs en disposition *libre* ; seulement les blocs *verrouillés* en disposition *automatique*. Les autres ont leur position recalculée à partir de `order`.
 
@@ -383,5 +386,5 @@ Le code suit ces règles, pour rester simple à relire :
 
 - **Aucun test automatique** pour l'instant : les vérifications ont été faites à la main dans le navigateur. Les fonctions de `lib/` sont les meilleures candidates pour de premiers tests, car elles sont pures.
 - **Les données restent dans le navigateur** : une autre machine ou un autre navigateur repart de la disposition par défaut.
-- **Écran étroit en disposition libre** : une position en pixels peut dépasser la largeur visible. Le bloc est alors ramené dans la largeur, et son emplacement peut différer de celui de l'écran où il a été posé.
+- **Redimensionner la fenêtre en direct** n'a pas pu être testé dans l'outil de test (l'animation du navigateur y est suspendue) : chaque largeur a été testée à froid, page rechargée.
 - **Pas encore de gestion des blocs** : on ne peut ni ajouter, ni supprimer, ni dupliquer un bloc depuis l'interface (les cinq blocs viennent de `mockBackend.ts`).

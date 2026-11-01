@@ -5,12 +5,14 @@
 // La largeur disponible est mesurée par le composant parent et reçue en prop.
 
 import { useMemo, useState } from 'react'
+import { Alert } from '@mui/material'
 import ReactGridLayout, { getCompactor, type ResizeHandleAxis } from 'react-grid-layout'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
 import { useGridInteractions } from '../hooks/useGridInteractions'
 import { toggleLock } from '../lib/blocks'
 import { blocksToLayout } from '../lib/gridLayout'
+import { isStacked, scaleFor } from '../lib/responsive'
 import type { Block } from '../types/block'
 import type { LayoutMode } from '../types/layoutMode'
 import type { AppTheme } from '../types/theme'
@@ -53,6 +55,9 @@ export default function Dashboard({
     () => blocksToLayout(blocks, containerWidth, layoutMode),
     [blocks, containerWidth, layoutMode],
   )
+  // Écran trop étroit en disposition libre : blocs empilés, on ne peut pas les organiser.
+  const stacked = isStacked(layoutMode, containerWidth)
+  const canArrange = editing && !stacked
   const interactions = useGridInteractions(blocks, layoutMode, containerWidth, onBlocksChange)
 
   // bloc affiché en plein écran (null = aucun)
@@ -63,11 +68,16 @@ export default function Dashboard({
   // modification change ; rien n'est enregistré avant « Enregistrer ».
   const handleToggleLock = (blockId: string) => {
     const item = layout.find((entry) => entry.i === blockId)
-    onBlocksChange(toggleLock(blocks, blockId, item))
+    onBlocksChange(toggleLock(blocks, blockId, item, scaleFor(layoutMode, containerWidth)))
   }
 
   return (
     <>
+      {editing && stacked && (
+        <Alert severity="info" className="save-error">
+          Écran trop étroit : les blocs sont empilés. Agrandissez la fenêtre pour les déplacer.
+        </Alert>
+      )}
       <ReactGridLayout
         key={interactions.revision}
         width={containerWidth}
@@ -82,11 +92,11 @@ export default function Dashboard({
           containerPadding: [0, 0],
         }}
         dragConfig={{
-          enabled: editing,
+          enabled: canArrange,
           handle: DRAG_HANDLE_SELECTOR,
           cancel: LOCK_BUTTON_SELECTOR,
         }}
-        resizeConfig={{ enabled: editing, handles: RESIZE_HANDLES }}
+        resizeConfig={{ enabled: canArrange, handles: RESIZE_HANDLES }}
         compactor={OVERLAP_COMPACTOR}
       >
         {blocks.map((block) => (
@@ -94,7 +104,7 @@ export default function Dashboard({
             key={block.id}
             block={block}
             theme={theme}
-            editing={editing}
+            editing={canArrange}
             onToggleLock={handleToggleLock}
             onExpand={setExpandedId}
           />

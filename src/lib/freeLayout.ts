@@ -7,7 +7,7 @@
 
 import type { LayoutItem } from 'react-grid-layout'
 import type { Block } from '../types/block'
-import { MAX_PLACEMENT_ATTEMPTS, overlaps, toItemAtOwnPosition } from './layoutItem'
+import { MAX_PLACEMENT_ATTEMPTS, overlaps, toItemAtOwnPosition, toLayoutItem } from './layoutItem'
 
 // Place libre la plus proche d'un bloc lâché sur d'autres blocs (disposition libre).
 // Les places candidates sont collées aux bords des voisins ; on garde la plus proche
@@ -62,4 +62,16 @@ export function freeLayout(blocks: Block[], containerWidth: number): LayoutItem[
     placed.push(item)
   }
   return placed
+}
+
+// Écran étroit : une seule colonne, chaque bloc pleine largeur, dans l'ordre de lecture
+// de la disposition libre. Les verrous n'ont pas d'effet ici.
+export function stackedLayout(blocks: Block[], containerWidth: number): LayoutItem[] {
+  const ordered = [...blocks].sort((a, b) => a.y - b.y || a.x - b.x)
+  let y = 0
+  return ordered.map((block) => {
+    const item = toLayoutItem(block, 0, y, containerWidth)
+    y += block.height
+    return { ...item, static: false }
+  })
 }

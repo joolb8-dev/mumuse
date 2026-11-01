@@ -63,7 +63,7 @@ export function useGridInteractions(
     refreshGrid()
     // disposition automatique : seul l'ordre de lecture compte, les autres blocs se replacent
     if (layoutMode === 'auto' || !item) {
-      onBlocksChange(layoutToBlocks(replaceItem(layout, item), blocks))
+      onBlocksChange(layoutToBlocks(replaceItem(layout, item), blocks, layoutMode, containerWidth))
       return
     }
     // disposition libre : le bloc garde sa position (aimantée sauf avec Maj), mais jamais
@@ -73,7 +73,7 @@ export function useGridInteractions(
     const dropped = others.some((o) => overlaps(target, o))
       ? nearestFreeSpot(others, item, containerWidth)
       : target
-    onBlocksChange(layoutToBlocks(replaceItem(layout, dropped), blocks))
+    onBlocksChange(layoutToBlocks(replaceItem(layout, dropped), blocks, layoutMode, containerWidth))
   }
 
   const onResize: EventCallback = (layout, _old, item, _placeholder, event) => {
@@ -94,7 +94,7 @@ export function useGridInteractions(
     if (layoutMode === 'free' && resized && others.some((o) => overlaps(resized as LayoutItem, o))) {
       resized = oldItem
     }
-    onBlocksChange(layoutToBlocks(replaceItem(layout, resized), blocks))
+    onBlocksChange(layoutToBlocks(replaceItem(layout, resized), blocks, layoutMode, containerWidth))
   }
 
   return { ghost, revision, onDragStop, onResize, onResizeStop }

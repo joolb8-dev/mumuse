@@ -32,11 +32,17 @@ export function areBlocksEqual(a: Block[], b: Block[], mode: LayoutMode): boolea
 }
 
 // Verrouille un bloc à sa place actuelle (`item`, sa position dans la grille), ou le
-// déverrouille s'il l'était. Les autres blocs ne changent pas.
-export function toggleLock(blocks: Block[], blockId: string, item: LayoutItem | undefined): Block[] {
+// déverrouille s'il l'était. `scale` : facteur écran / valeurs enregistrées (voir
+// lib/responsive.ts). Les autres blocs ne changent pas.
+export function toggleLock(
+  blocks: Block[],
+  blockId: string,
+  item: LayoutItem | undefined,
+  scale: number,
+): Block[] {
   return blocks.map((block) => {
     if (block.id !== blockId) return block
     // c'est la position affichée qui est figée
-    return { ...block, locked: !block.locked, x: item?.x ?? block.x, y: item?.y ?? block.y }
+    return { ...block, locked: !block.locked, x: item ? item.x / scale : block.x, y: item?.y ?? block.y }
   })
 }
