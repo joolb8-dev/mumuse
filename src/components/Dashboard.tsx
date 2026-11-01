@@ -5,11 +5,7 @@
 // La largeur disponible est mesurée par le composant parent et reçue en prop.
 
 import { useMemo, useState } from 'react'
-import ReactGridLayout, {
-  getCompactor,
-  verticalCompactor,
-  type ResizeHandleAxis,
-} from 'react-grid-layout'
+import ReactGridLayout, { getCompactor, type ResizeHandleAxis } from 'react-grid-layout'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
 import { useGridInteractions } from '../hooks/useGridInteractions'
@@ -30,10 +26,11 @@ const RESIZE_HANDLES: ResizeHandleAxis[] = ['n', 's', 'e', 'w', 'ne', 'nw', 'se'
 const DRAG_HANDLE_SELECTOR = '.block-card__header'
 const LOCK_BUTTON_SELECTOR = '.block-card__lock'
 
-// Disposition automatique : les blocs remontent et se tassent.
-// Disposition libre : aucun tassement, et un bloc ne peut pas en recouvrir un autre.
-const AUTO_COMPACTOR = verticalCompactor
-const FREE_COMPACTOR = getCompactor(null, false, true)
+// Pendant un déplacement, le bloc peut survoler les autres sans les pousser ni être
+// bloqué : la grille autorise le recouvrement et ne tasse rien. C'est au relâchement
+// que le résultat est calculé (voir hooks/useGridInteractions.ts) : jamais de bloc posé
+// sur un autre.
+const OVERLAP_COMPACTOR = getCompactor(null, true, false)
 
 interface DashboardProps {
   blocks: Block[]
@@ -72,6 +69,7 @@ export default function Dashboard({
   return (
     <>
       <ReactGridLayout
+        key={interactions.revision}
         width={containerWidth}
         layout={layout}
         onDragStop={interactions.onDragStop}
@@ -89,7 +87,7 @@ export default function Dashboard({
           cancel: LOCK_BUTTON_SELECTOR,
         }}
         resizeConfig={{ enabled: editing, handles: RESIZE_HANDLES }}
-        compactor={layoutMode === 'free' ? FREE_COMPACTOR : AUTO_COMPACTOR}
+        compactor={OVERLAP_COMPACTOR}
       >
         {blocks.map((block) => (
           <BlockCard

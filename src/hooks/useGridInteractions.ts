@@ -13,7 +13,9 @@
 
 import { useState } from 'react'
 import type { EventCallback, LayoutItem } from 'react-grid-layout'
+import { nearestFreeSpot } from '../lib/freeLayout'
 import { layoutToBlocks } from '../lib/gridLayout'
+import { overlaps } from '../lib/layoutItem'
 import { snapMovedItem, snapResizedItem } from '../lib/snapping'
 import type { Block } from '../types/block'
 import type { LayoutMode } from '../types/layoutMode'
@@ -29,6 +31,8 @@ export interface GhostRect {
 
 interface UseGridInteractionsResult {
   ghost: GhostRect | null
+  // change à chaque fin de déplacement ou de redimensionnement (voir plus bas)
+  revision: number
   onDragStop: EventCallback
   onResize: EventCallback
   onResizeStop: EventCallback
@@ -48,11 +52,28 @@ export function useGridInteractions(
 ): UseGridInteractionsResult {
   const [ghost, setGhost] = useState<GhostRect | null>(null)
 
+  // La grille autorise le recouvrement pendant le geste et garde sa propre copie des
+  // positions. Si le résultat final est identique à la disposition d'avant (bloc
+  // ramené à sa place), elle ne se remettrait pas à jour : changer `revision` la
+  // force à repartir de nos blocs.
+  const [revision, setRevision] = useState(0)
+  const refreshGrid = () => setRevision((current) => current + 1)
+
   const onDragStop: EventCallback = (layout, _old, item, _placeholder, event) => {
-    // seule la disposition libre garde la position où le bloc est déposé
-    const shouldSnap = layoutMode === 'free' && item && !isShiftPressed(event)
-    const moved = shouldSnap ? snapMovedItem(layout, item, containerWidth) : item
-    onBlocksChange(layoutToBlocks(replaceItem(layout, moved), blocks))
+    refreshGrid()
+    // disposition automatique : seul l'ordre de lecture compte, les autres blocs se replacent
+    if (layoutMode === 'auto' || !item) {
+      onBlocksChange(layoutToBlocks(replaceItem(layout, item), blocks))
+      return
+    }
+    // disposition libre : le bloc garde sa position (aimantée sauf avec Maj), mais jamais
+    // sur un autre bloc : lâché dessus, il va à la place libre la plus proche
+    const others = layout.filter((entry) => entry.i !== item.i)
+    const target = isShiftPressed(event) ? item : snapMovedItem(layout, item, containerWidth)
+    const dropped = others.some((o) => overlaps(target, o))
+      ? nearestFreeSpot(others, item, containerWidth)
+      : target
+    onBlocksChange(layoutToBlocks(replaceItem(layout, dropped), blocks))
   }
 
   const onResize: EventCallback = (layout, _old, item, _placeholder, event) => {
@@ -64,11 +85,17 @@ export function useGridInteractions(
     setGhost({ x: item.x, y: item.y, w, h })
   }
 
-  const onResizeStop: EventCallback = (layout, _old, item, _placeholder, event) => {
+  const onResizeStop: EventCallback = (layout, oldItem, item, _placeholder, event) => {
     setGhost(null)
-    const resized = item && !isShiftPressed(event) ? snapResizedItem(layout, item, layoutMode) : item
+    refreshGrid()
+    let resized = item && !isShiftPressed(event) ? snapResizedItem(layout, item, layoutMode) : item
+    // disposition libre : un bloc agrandi ne peut pas recouvrir un voisin, il reprend sa taille
+    const others = layout.filter((entry) => entry.i !== item?.i)
+    if (layoutMode === 'free' && resized && others.some((o) => overlaps(resized as LayoutItem, o))) {
+      resized = oldItem
+    }
     onBlocksChange(layoutToBlocks(replaceItem(layout, resized), blocks))
   }
 
-  return { ghost, onDragStop, onResize, onResizeStop }
+  return { ghost, revision, onDragStop, onResize, onResizeStop }
 }
